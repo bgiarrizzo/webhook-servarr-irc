@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        - BUILD=PROD
+    ports:
+      - "8000:8000"
+    environment:
+      SERVER_HOST: ""
+      SERVER_PORT: 8000
+
+      IRC_CHANNEL: "#cloe"
+      IRC_NICK: "Cloe"
