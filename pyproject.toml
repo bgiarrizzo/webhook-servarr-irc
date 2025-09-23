@@ -1,0 +1,15 @@
+[project]
+name = "servarr-irc-webhook"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic",
+    "pydantic-settings",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.13.1",
+]
