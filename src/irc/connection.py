@@ -25,16 +25,15 @@ def colorize(line: str, color: str):
 class IrcConnection:
     def __init__(self, server, channel, nick, passw, port):
         self.server = server
-        self.channel = channel
+        self.port = port
         self.nick = nick
         self.passw = passw
-        self.port = port
+        self.channel = channel
 
         self.connection = None
         self.buffer = ""
         self.last_pong = 0
         self.await_pong = False
-
         self.queue = []
         self.lock = threading.Lock()
         self.quit_loop = False
