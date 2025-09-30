@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # Set the password for your registered empty, leave empty if not applicable
     # Note: freenode(and potentially other servers) want password to be of the form
     # "nick:pass", so for ex. IRC_PASS = 'WfTestBot:mypass123'
-    IRC_PASS: str = ""
+    IRC_PASS: str = "p4ssw0rd"
 
 
 settings = Settings()

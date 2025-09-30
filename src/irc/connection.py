@@ -39,11 +39,16 @@ class IrcConnection:
         self.quit_loop = False
 
     def connect_server(self):
-        print(colorize(f"Connecting to {self.server}:{self.port}", "brown"))
+        print(
+            colorize(f"Connecting to {self.server}:{self.port}", "brown"),
+        )
 
         while not self.connection:
             try:
-                self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.connection = socket.socket(
+                    socket.AF_INET,
+                    socket.SOCK_STREAM,
+                )
                 self.connection.connect((self.server, self.port))
             except socket.gaierror:
                 print(
