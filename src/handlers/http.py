@@ -6,6 +6,7 @@ from handlers.apps import handle_app
 from config import settings
 
 CONTENT_TYPE = "content-type"
+CONTENT_LEN = "content-length"
 
 
 class HTTPHandler(BaseHTTPRequestHandler):
@@ -45,7 +46,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
             print("Error: IRC connection not set")
 
     def validate_headers(self):
-        if not all(x in self.headers for x in [CONTENT_TYPE]):
+        if not all(x in self.headers for x in [CONTENT_TYPE, CONTENT_LEN]):
             self.send_error(400, "Bad Request", "Missing required headers")
             return False
         if self.headers[CONTENT_TYPE] != "application/json":
@@ -54,8 +55,9 @@ class HTTPHandler(BaseHTTPRequestHandler):
         return True
 
     def get_json_data(self):
+        content_length = int(self.headers[CONTENT_LEN])
         try:
-            return json.loads(self.rfile.read())
+            return json.loads(self.rfile.read(content_length))
         except json.JSONDecodeError:
             self.send_error(400, "Bad Request", "Invalid JSON")
             return None
