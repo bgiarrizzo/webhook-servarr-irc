@@ -4,9 +4,11 @@ import sys
 import socket
 import threading
 
+
 PING_INTERVAL = 30
 PING_TIMEOUT = PING_INTERVAL + 30  # Must be PING_INTERVAL + actual ping timeout
 RETRY_INTERVAL = 60
+
 
 ansi_colors = {
     "green": "1;32m",
@@ -39,17 +41,13 @@ class IrcConnection:
         self.quit_loop = False
 
     def connect_server(self):
-        print(
-            colorize(f"Connecting to {self.server}:{self.port}", "brown"),
-        )
+        print(colorize(f"Connecting to {self.server}:{self.port}", "brown"))
 
         while not self.connection:
             try:
-                self.connection = socket.socket(
-                    socket.AF_INET,
-                    socket.SOCK_STREAM,
-                )
+                self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.connection.connect((self.server, self.port))
+                self.connection.setblocking(False)  # Important pour select non bloquant
             except socket.gaierror:
                 print(
                     colorize(
@@ -64,23 +62,50 @@ class IrcConnection:
         self.await_pong = False
 
         if self.passw:
-            self.post_string(f"PASS {self.passw}\n")
+            self.post_string(f"PASS {self.passw}\r\n")
 
-        self.post_string(f"NICK {self.nick}\n")
-        self.post_string(f"USER {self.nick} 0 * :{self.nick}\n")
-        self.post_string(f"JOIN {self.channel}\n")
-        self.send_message(colorize("IRC bot initialized successfully", "green"))
+        self.post_string(f"NICK {self.nick}\r\n")
+        self.post_string(f"USER {self.nick} 0 * :{self.nick}\r\n")
+
+        # Attente du message 001 (RPL_WELCOME)
+        buffer = ""
+        while True:
+            try:
+                data = self.connection.recv(4096)
+                if not data:
+                    continue
+                buffer += data.decode("utf-8", errors="ignore")
+                lines = buffer.split("\r\n")
+                for line in lines[:-1]:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    print(colorize(line, "green"))
+                    if " 001 " in line:
+                        # Connexion complète, on peut rejoindre le canal
+                        self.post_string(f"JOIN {self.channel}\r\n")
+                        return
+                    # Réponse automatique aux PING pendant l'attente
+                    if line.startswith("PING"):
+                        pong_response = line.replace("PING", "PONG", 1)
+                        self.post_string(pong_response + "\r\n")
+                buffer = lines[-1]
+            except BlockingIOError:
+                # Pas de données encore
+                time.sleep(0.1)
 
     def reconnect(self):
-        assert self.connection is not None
-
-        self.connection.shutdown(2)
-        self.connection.close()
+        if self.connection:
+            try:
+                self.connection.shutdown(socket.SHUT_RDWR)
+                self.connection.close()
+            except Exception:
+                pass
         self.connection = None
         self.connect_server()
 
     def try_ping(self):
-        self.post_string(f"PING {self.server}\n")
+        self.post_string(f"PING {self.server}\r\n")
         self.await_pong = True
 
     def schedule_message(self, message: str):
@@ -88,8 +113,10 @@ class IrcConnection:
             self.queue.append(message)
 
     def process_line(self, line: str):
-        if "PING" in line:
-            self.post_string(f"PONG {line.split()[1]}\n")
+        line = line.strip()
+        if line.startswith("PING"):
+            pong_response = line.replace("PING", "PONG", 1)
+            self.post_string(pong_response + "\r\n")
         elif "PONG" in line:
             self.last_pong = time.time()
             self.await_pong = False
@@ -98,30 +125,33 @@ class IrcConnection:
 
     def process_input(self):
         assert self.connection is not None
-
-        data = self.connection.recv(4096)
-        if not data:
-            return
-
-        self.buffer += data.decode("utf-8")
-        last_line_complete = self.buffer[-1] == "\n"
-        lines = self.buffer.split("\n")
-        if last_line_complete:
-            lines.append("")
-
-        for line in lines[:-1]:
-            self.process_line(line)
-
-        self.buffer = lines[-1]
+        try:
+            data = self.connection.recv(4096)
+            if not data:
+                # Serveur a probablement fermé la connexion, reconnecter
+                self.reconnect()
+                return
+            self.buffer += data.decode("utf-8", errors="ignore")
+            while "\r\n" in self.buffer:
+                line, self.buffer = self.buffer.split("\r\n", 1)
+                if line:
+                    self.process_line(line)
+        except BlockingIOError:
+            # Pas de données disponibles actuellement
+            pass
+        except Exception:
+            self.reconnect()
 
     def post_string(self, message: str):
         assert self.connection is not None
-
-        print(colorize(self.nick + "> " + message.strip(), "blue"))
-        self.connection.send(message.encode("utf-8"))
+        try:
+            print(colorize(self.nick + "> " + message.strip(), "blue"))
+            self.connection.send(message.encode("utf-8"))
+        except Exception:
+            self.reconnect()
 
     def send_message(self, message: str):
-        self.post_string(f"NOTICE {self.channel} :{message}\n")
+        self.post_string(f"PRIVMSG {self.channel} :{message}\r\n")
 
     def stop_loop(self):
         self.quit_loop = True
@@ -131,14 +161,15 @@ class IrcConnection:
         while not self.quit_loop:
             try:
                 to_read, _, _ = select.select([self.connection], [], [], 1)
-            except select.error:
+            except (select.error, ValueError):
                 self.reconnect()
                 continue
 
-            if self.last_pong + PING_INTERVAL < time.time() and not self.await_pong:
+            now = time.time()
+            if now - self.last_pong > PING_INTERVAL and not self.await_pong:
                 self.try_ping()
 
-            if self.last_pong + PING_TIMEOUT < time.time() and self.await_pong:
+            if now - self.last_pong > PING_TIMEOUT and self.await_pong:
                 self.reconnect()
                 continue
 
@@ -151,4 +182,8 @@ class IrcConnection:
 
     def __del__(self):
         if self.connection:
-            self.connection.close()
+            try:
+                self.connection.shutdown(socket.SHUT_RDWR)
+                self.connection.close()
+            except Exception:
+                pass

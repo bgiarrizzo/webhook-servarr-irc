@@ -16,6 +16,7 @@ class LidarrEventHandler:
             "albumimported": self.on_album_imported,
             "application_updated": self.on_application_update,
             "artistadd": self.on_artist_add,
+            "artistdelete": self.on_artist_delete,
             "download": self.on_download,
             "grab": self.on_grab,
             "health": self.on_health_issue,
@@ -55,12 +56,15 @@ class LidarrEventHandler:
 
     def on_album_deleted(self, irc: IrcConnection, data: Dict):
         album_name = data.get("album", {}).get("title", "Unknown")
+        artist_name = data.get("artist", {}).get("name", "Unknown")
+        album_year = data.get("album", {}).get("year", "Unknown")
 
-        message = f"Deleted : {album_name}"
+        message = f"Deleted : {artist_name} - {album_name} ({album_year})"
         self.send_message_to_event_handler("file_deleted", irc, message)
 
     def on_album_deleted_for_upgrade(self, irc: IrcConnection, data: Dict):
         album_name = data.get("album", {}).get("title", "Unknown")
+        artist_name = data.get("artist", {}).get("name", "Unknown")
         file_name = data.get("albumFile", {}).get("relativePath", "Unknown")
 
         message = f"Deleted for upgrade : {album_name} - {file_name}"
@@ -68,8 +72,10 @@ class LidarrEventHandler:
 
     def on_album_imported(self, irc: IrcConnection, data: Dict):
         album_name = data.get("album", {}).get("title", "Unknown")
+        artist_name = data.get("artist", {}).get("name", "Unknown")
+        album_year = data.get("album", {}).get("year", "Unknown")
 
-        message = f"Imported : {album_name}"
+        message = f"Imported : {artist_name} - {album_name} ({album_year})"
         self.send_message_to_event_handler("import", irc, message)
 
     def on_application_update(self, irc: IrcConnection, data: Dict):
@@ -80,8 +86,16 @@ class LidarrEventHandler:
         self.send_message_to_event_handler("application_update", irc, message)
 
     def on_artist_add(self, irc: IrcConnection, data: Dict):
-        message = ""
+        artist_name = data.get("artist", {}).get("name", "Unknown")
+
+        message = f"Added Artist : {artist_name}"
         self.send_message_to_event_handler("AddArtist", irc, message)
+
+    def on_artist_delete(self, irc: IrcConnection, data: Dict):
+        artist_name = data.get("artist", {}).get("name", "Unknown")
+
+        message = f"Deleted Artist : {artist_name}"
+        self.send_message_to_event_handler("DeleteArtist", irc, message)
 
     def on_download(self, irc: IrcConnection, data: Dict):
         album_name = data.get("album", {}).get("name", "Unknown")
@@ -122,7 +136,7 @@ class LidarrEventHandler:
         self.send_message_to_event_handler("health_restored", irc, message)
 
     def on_import_failure(self, irc: IrcConnection, data: Dict):
-        message = ""
+        message = f"Import failed: {data}"
         self.send_message_to_event_handler("import_failure", irc, message)
 
     def on_manual_interaction_required(self, irc: IrcConnection, data: Dict):
@@ -149,9 +163,10 @@ class LidarrEventHandler:
         self.send_message_to_event_handler("test", irc, message)
 
     def on_upgrade(self, irc: IrcConnection, data: Dict):
+        artist_name = data.get("artist", {}).get("name", "Unknown")
         album_name = data.get("album", {}).get("title", "Unknown")
 
-        message = f"Upgraded : {album_name}"
+        message = f"Upgraded : {artist_name} - {album_name}"
         self.send_message_to_event_handler("upgrade", irc, message)
 
 

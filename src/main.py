@@ -28,10 +28,10 @@ irc_thread.start()
 
 try:
     server = HTTPServer(
-        (settings.SERVER_HOST, settings.SERVER_PORT),
+        (settings.HTTP_SERVER_HOST, settings.HTTP_SERVER_PORT),
         HTTPHandler,
     )
-    print(f"Server started on {settings.SERVER_HOST}:{settings.SERVER_PORT}")
+    print(f"Server started on {settings.HTTP_SERVER_HOST}:{settings.HTTP_SERVER_PORT}")
     server.serve_forever()
 except KeyboardInterrupt:
     print("Exiting")

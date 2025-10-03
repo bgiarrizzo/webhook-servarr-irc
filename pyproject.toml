@@ -1,5 +1,5 @@
 [project]
-name = "servarr-irc-webhook"
+name = "webhook-servarr-irc"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"

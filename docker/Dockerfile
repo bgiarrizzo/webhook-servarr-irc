@@ -1,43 +1,40 @@
 # ------------------------------------------------------------------------------
 # Stage 1 - Build
 
-FROM python:alpine AS BUILD_IMAGE
+FROM python:alpine AS build-image
 
-ARG BUILD=PROD
-ENV VENV=/opt/venv
-
-WORKDIR /app/
+ENV VENV=/workspace/.venv/
+WORKDIR /workspace/
 
 RUN python -m venv ${VENV} 
 
 ENV PATH="${VENV}/bin:$PATH"
 ENV PYTHONPATH="${VENV}/bin:$PYTHONPATH"
 
-RUN pip install --no-cache-dir --upgrade pip pipenv
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel uv
 
-COPY Pipfile .
-COPY Pipfile.lock .
+# Copier les fichiers de configuration de dépendances
+COPY pyproject.toml .
+COPY uv.lock .
 
-RUN if [ ${BUILD} = "DEV" ]; then pipenv requirements --dev > reqs.txt; fi
-RUN if [ ${BUILD} = "PROD" ]; then pipenv requirements > reqs.txt; fi
-
-RUN pip install --no-cache-dir -r reqs.txt
+# Installation des dépendances
+RUN uv sync
 
 # ------------------------------------------------------------------------------
 # Stage 2 - Run
 
-FROM python:alpine AS RUN_IMAGE
+FROM python:alpine AS run-image
 
-ENV VENV=/opt/venv
+ENV VENV=/workspace/.venv/
 
-WORKDIR /app/
+WORKDIR /workspace/
 
 EXPOSE 8000
 
-COPY --from=BUILD_IMAGE ${VENV} ${VENV}
+COPY --from=build-image ${VENV} ${VENV}
 
-ENV PATH="${VENV}/bin:$PATH"
-ENV PYTHONPATH="${VENV}/bin:$PYTHONPATH"
+ENV PATH="${VENV}/bin:${PATH}"
+ENV PYTHONPATH="${VENV}/bin:${PYTHONPATH}"
 ENV PYTHONDONOTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 

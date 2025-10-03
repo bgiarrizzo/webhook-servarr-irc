@@ -20,7 +20,7 @@ color_codes = {
 
 def color_modifier(color):
     if color == "reset":
-        return "\x0F"
+        return "\x0f"
 
     fmt = ""
     real_color = color
