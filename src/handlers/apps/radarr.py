@@ -12,7 +12,7 @@ class RadarrEventHandler:
         self.event_map = {
             "applicationupdate": self.on_application_update,
             "grab": self.on_grab,
-            "healthissue": self.on_health_issue,
+            "health": self.on_health_issue,
             "healthrestored": self.on_health_restored,
             "manualinteractionrequired": self.on_manual_interaction_required,
             "movieadded": self.on_movie_added,
@@ -44,6 +44,7 @@ class RadarrEventHandler:
     def on_application_update(self, irc: IrcConnection, data: Dict):
         previous_version = data.get("previousVersion", "Unknown")
         new_version = data.get("version", "Unknown")
+
         message = f"Radarr has been updated to version {new_version} from version {previous_version}"
         self.send_message_to_event_handler("application_update", irc, message)
 
@@ -64,13 +65,15 @@ class RadarrEventHandler:
     def on_health_issue(self, irc: IrcConnection, data: Dict):
         issue_type = data.get("type", "Unknown")
         issue_message = data.get("message", "No message")
-        message = f"Radarr health check issue - {issue_type} : {issue_message}"
+
+        message = f"Health check issue - {issue_type} : {issue_message}"
         self.send_message_to_event_handler("health_issue", irc, message)
 
     def on_health_restored(self, irc: IrcConnection, data: Dict):
         issue_type = data.get("type", "Unknown")
         issue_message = data.get("message", "No message")
-        message = f"Radarr health check restored - {issue_type} : {issue_message}"
+
+        message = f"Health check restored - {issue_type} : {issue_message}"
         self.send_message_to_event_handler("health_restored", irc, message)
 
     def on_manual_interaction_required(self, irc: IrcConnection, data: Dict):
@@ -82,39 +85,52 @@ class RadarrEventHandler:
         movie_year = data.get("movie", {}).get("year", "Unknown")
         tmdb_movie_id = data.get("movie", {}).get("tmdbId", "Unknown")
         movie_tmdb_url = f"https://www.themoviedb.org/movie/{tmdb_movie_id}"
+
         message = f"Added : {movie_name} - {movie_year} - {movie_tmdb_url}"
         self.send_message_to_event_handler("added", irc, message)
 
     def on_movie_deleted(self, irc: IrcConnection, data: Dict):
         movie_name = data.get("movie", {}).get("title", "Unknown")
+
         message = f"Deleted : {movie_name}"
         self.send_message_to_event_handler("file_deleted", irc, message)
 
     def on_movie_deleted_for_upgrade(self, irc: IrcConnection, data: Dict):
         movie_name = data.get("movie", {}).get("title", "Unknown")
         file_name = data.get("movieFile", {}).get("relativePath", "Unknown")
+
         message = f"Deleted for upgrade : {movie_name} - {file_name}"
         self.send_message_to_event_handler("file_deleted_for_upgrade", irc, message)
 
     def on_movie_import(self, irc: IrcConnection, data: Dict):
         movie_name = data.get("movie", {}).get("title", "Unknown")
-        message = f"Imported : {movie_name}"
+        movie_year = data.get("movie", {}).get("year", "Unknown")
+        tmdb_movie_id = data.get("movie", {}).get("tmdbId", "Unknown")
+        movie_tmdb_url = f"https://www.themoviedb.org/movie/{tmdb_movie_id}"
+
+        message = f"Imported : {movie_name} - {movie_year} - {movie_tmdb_url}"
         self.send_message_to_event_handler("import", irc, message)
 
     def on_rename(self, irc: IrcConnection, data: Dict):
         old_file_name = data.get("oldPath", "Unknown")
         new_file_name = data.get("newPath", "Unknown")
+
         message = f"Renamed : {old_file_name} to {new_file_name}"
         self.send_message_to_event_handler("rename", irc, message)
 
     def on_test(self, irc: IrcConnection, data: Dict):
         date_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         message = f"Test message from {APP_NAME} posted at {date_now}"
         self.send_message_to_event_handler("test", irc, message)
 
     def on_upgrade(self, irc: IrcConnection, data: Dict):
         movie_name = data.get("movie", {}).get("title", "Unknown")
-        message = f"Upgraded : {movie_name}"
+        movie_year = data.get("movie", {}).get("year", "Unknown")
+        tmdb_movie_id = data.get("movie", {}).get("tmdbId", "Unknown")
+        movie_tmdb_url = f"https://www.themoviedb.org/movie/{tmdb_movie_id}"
+
+        message = f"Upgraded : {movie_name} - {movie_year} - {movie_tmdb_url}"
         self.send_message_to_event_handler("upgrade", irc, message)
 
 
