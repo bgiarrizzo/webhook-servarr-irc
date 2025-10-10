@@ -11,6 +11,7 @@ class SonarrEventHandler:
     def __init__(self):
         self.event_map = {
             "application_updated": self.on_application_update,
+            "download": self.on_download,
             "episodeadded": self.on_episode_added,
             "episodedelete": self.on_episode_deleted,
             "episodedeletedforupgrade": self.on_episode_deleted_for_upgrade,
@@ -58,6 +59,21 @@ class SonarrEventHandler:
 
         message = f"Sonarr has been updated to version {new_version} from version {previous_version}"
         self.send_message_to_event_handler("application_update", irc, message)
+
+    def on_download(self, irc: IrcConnection, data: Dict):
+        series_name = data.get("series", {}).get("title", "Unknown")
+        release_title = data.get("release", {}).get("releaseTitle", "Unknown")
+        episode_list = (
+            [
+                episode.get("episodeNumber", "Unknown")
+                for episode in data.get("episodes", [])
+            ]
+            if len(data.get("episodes", [])) > 1
+            else [data.get("episodes", {})[0].get("episodeNumber", "Unknown")]
+        )
+
+        message = f"Download : Episodes {', '.join(episode_list)} - {series_name} - {release_title}"
+        self.send_message_to_event_handler("download", irc, message)
 
     def on_episode_deleted(self, irc: IrcConnection, data: Dict):
         episode_name = data.get("episodes", {})[0].get("title", "Unknown")

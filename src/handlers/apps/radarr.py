@@ -11,6 +11,7 @@ class RadarrEventHandler:
     def __init__(self):
         self.event_map = {
             "applicationupdate": self.on_application_update,
+            "download": self.on_download,
             "grab": self.on_grab,
             "health": self.on_health_issue,
             "healthrestored": self.on_health_restored,
@@ -47,6 +48,20 @@ class RadarrEventHandler:
 
         message = f"Radarr has been updated to version {new_version} from version {previous_version}"
         self.send_message_to_event_handler("application_update", irc, message)
+
+    def on_download(self, irc: IrcConnection, data: Dict):
+        movie_name = data.get("movie", {}).get("title", "Unknown")
+        download_client = data.get("downloadClient", "Unknown")
+        source = data.get("source", "Unknown")
+        quality = data.get("quality", {}).get("quality", "Unknown")
+        size_in_gigabytes = data.get("size", 0) / 1024 / 1024 / 1024
+        size_in_gigabytes = f"{round(size_in_gigabytes, 2)} GB"
+
+        message = (
+            f"Downloaded : {movie_name} via {download_client} from {source} - "
+            f"{quality} - Size = {size_in_gigabytes}"
+        )
+        self.send_message_to_event_handler("download", irc, message)
 
     def on_grab(self, irc: IrcConnection, data: Dict):
         movie_name = data.get("movie", {}).get("title", "Unknown")
