@@ -44,3 +44,13 @@ venv: create_venv ## Load virtual environment
 
 serve: venv install ## Run a local server
 	. $(VENV_BIN)/activate; $(PYTHON) src/main.py
+
+build:
+	docker rm -f webhook-servarr-irc || true
+	docker rmi webhook-servarr-irc || true
+	docker system prune -f
+	docker build -t webhook-servarr-irc -f docker/Dockerfile .
+
+run: build
+	docker rm -f webhook-servarr-irc || true
+	docker run -d --name webhook-servarr-irc -p 8000:8000 -e "TZ=Europe/Paris" -e "IRC_SERVER=192.168.1.17" -e "IRC_CHANNEL=#servarr" webhook-servarr-irc
