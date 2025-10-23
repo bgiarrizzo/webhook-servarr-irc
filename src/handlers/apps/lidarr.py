@@ -47,9 +47,15 @@ class LidarrEventHandler:
         self.send_message_to_event_handler("error", irc, message)
 
     def on_album_added(self, irc: IrcConnection, data: Dict):
-        album_name = data.get("album", {}).get("title", "Unknown")
         artist_name = data.get("artist", {}).get("name", "Unknown")
         album_year = data.get("album", {}).get("year", "Unknown")
+
+        album_list = data.get("albums", [])
+
+        if len(album_list) == 1:
+            album_name = album_list[0].get("title")
+        else:
+            album_name = " & ".join([album.get("title") for album in album_list])
 
         message = f"Added : {album_name} by {artist_name} - {album_year}"
 
@@ -102,9 +108,21 @@ class LidarrEventHandler:
         self.send_message_to_event_handler("DeleteArtist", irc, message)
 
     def on_download(self, irc: IrcConnection, data: Dict):
-        album_name = data.get("album", {}).get("name", "Unknown")
         artist_name = data.get("artist", {}).get("name", "Unknown")
         release_title = data.get("release", {}).get("releaseTitle", "Unknown")
+
+        album_list = data.get("albums")
+        album_item = data.get("album")
+
+        if album_list:
+            if len(album_list) == 1:
+                album_name = album_list[0].get("title")
+            else:
+                album_name = " & ".join([album.get("title") for album in album_list])
+        elif album_item:
+            album_name = album_item.get("title", "Unknown")
+        else:
+            album_name = "Unknown"
 
         message = (
             f"Download : {album_name} by {artist_name} - ReleaseTitle {release_title}"
@@ -116,12 +134,18 @@ class LidarrEventHandler:
         self.send_message_to_event_handler("download", irc, message)
 
     def on_grab(self, irc: IrcConnection, data: Dict):
-        album_name = data.get("album", {}).get("title", "Unknown")
         artist_name = data.get("artist", {}).get("name", "Unknown")
         release_title = data.get("release", {}).get("releaseTitle", "Unknown")
         quality = data.get("release", {}).get("quality", "Unknown")
         size_in_gigabytes = data.get("release", {}).get("size", 0) / 1024 / 1024 / 1024
         size_in_gigabytes = f"{round(size_in_gigabytes, 2)} GB"
+
+        album_list = data.get("albums", [])
+
+        if len(album_list) == 1:
+            album_name = album_list[0].get("title")
+        else:
+            album_name = " & ".join([album.get("title") for album in album_list])
 
         message = (
             f"Grabbed : {album_name} by {artist_name} - ReleaseTitle = {release_title} - "
