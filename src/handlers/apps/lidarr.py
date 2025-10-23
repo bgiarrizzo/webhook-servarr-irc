@@ -52,6 +52,10 @@ class LidarrEventHandler:
         album_year = data.get("album", {}).get("year", "Unknown")
 
         message = f"Added : {album_name} by {artist_name} - {album_year}"
+
+        if "Unknown" in message:
+            message += f" - Full Payload: {data}"
+
         self.send_message_to_event_handler("added", irc, message)
 
     def on_album_deleted(self, irc: IrcConnection, data: Dict):
@@ -105,6 +109,10 @@ class LidarrEventHandler:
         message = (
             f"Download : {album_name} by {artist_name} - ReleaseTitle {release_title}"
         )
+
+        if "Unknown" in message:
+            message += f" - Full Payload: {data}"
+
         self.send_message_to_event_handler("download", irc, message)
 
     def on_grab(self, irc: IrcConnection, data: Dict):
@@ -119,6 +127,10 @@ class LidarrEventHandler:
             f"Grabbed : {album_name} by {artist_name} - ReleaseTitle = {release_title} - "
             f"{quality} - Size = {size_in_gigabytes}"
         )
+
+        if "Unknown" in message:
+            message += f" - Full Payload: {data}"
+
         self.send_message_to_event_handler("grab", irc, message)
 
     def on_health_issue(self, irc: IrcConnection, data: Dict):
