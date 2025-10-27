@@ -109,7 +109,6 @@ class LidarrEventHandler:
 
     def on_download(self, irc: IrcConnection, data: Dict):
         artist_name = data.get("artist", {}).get("name", "Unknown")
-        release_title = data.get("release", {}).get("releaseTitle", "Unknown")
 
         album_list = data.get("albums")
         album_item = data.get("album")
@@ -124,9 +123,7 @@ class LidarrEventHandler:
         else:
             album_name = "Unknown"
 
-        message = (
-            f"Download : {album_name} by {artist_name} - ReleaseTitle {release_title}"
-        )
+        message = f"Download : {album_name} by {artist_name}"
 
         if "Unknown" in message:
             message += f" - Full Payload: {data}"
