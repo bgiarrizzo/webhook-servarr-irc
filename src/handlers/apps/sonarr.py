@@ -10,7 +10,7 @@ APP_NAME = "Sonarr"
 class SonarrEventHandler:
     def __init__(self):
         self.event_map = {
-            "application_updated": self.on_application_update,
+            "applicationupdate": self.on_application_update,
             "download": self.on_download,
             "episodeadded": self.on_episode_added,
             "episodedelete": self.on_episode_deleted,
@@ -55,7 +55,7 @@ class SonarrEventHandler:
 
     def on_application_update(self, irc: IrcConnection, data: Dict):
         previous_version = data.get("previousVersion", "Unknown")
-        new_version = data.get("version", "Unknown")
+        new_version = data.get("newVersion", "Unknown")
 
         message = f"Sonarr has been updated to version {new_version} from version {previous_version}"
         self.send_message_to_event_handler("application_update", irc, message)

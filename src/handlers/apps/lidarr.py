@@ -14,7 +14,7 @@ class LidarrEventHandler:
             "albumdelete": self.on_album_deleted,
             "albumdeletedforupgrade": self.on_album_deleted_for_upgrade,
             "albumimported": self.on_album_imported,
-            "application_updated": self.on_application_update,
+            "applicationupdate": self.on_application_update,
             "artistadd": self.on_artist_add,
             "artistdelete": self.on_artist_delete,
             "download": self.on_download,
@@ -90,7 +90,7 @@ class LidarrEventHandler:
 
     def on_application_update(self, irc: IrcConnection, data: Dict):
         previous_version = data.get("previousVersion", "Unknown")
-        new_version = data.get("version", "Unknown")
+        new_version = data.get("newVersion", "Unknown")
 
         message = f"Lidarr has been updated to version {new_version} from version {previous_version}"
         self.send_message_to_event_handler("application_update", irc, message)

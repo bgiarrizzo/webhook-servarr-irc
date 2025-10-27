@@ -10,7 +10,7 @@ APP_NAME = "Prowlarr"
 class ProwlarrEventHandler:
     def __init__(self):
         self.event_map = {
-            "applicationupdated": self.on_application_update,
+            "applicationupdate": self.on_application_update,
             "grab": self.on_grab,
             "health": self.on_health_issue,
             "healthrestored": self.on_health_restored,
@@ -41,7 +41,7 @@ class ProwlarrEventHandler:
 
     def on_application_update(self, irc: IrcConnection, data: Dict):
         previous_version = data.get("previousVersion", "Unknown")
-        new_version = data.get("version", "Unknown")
+        new_version = data.get("newVersion", "Unknown")
 
         message = f"Prowlarr has been updated to version {new_version} from version {previous_version}"
         self.send_message_to_event_handler("application_update", irc, message)
@@ -101,7 +101,7 @@ class ProwlarrEventHandler:
 
     def on_test(self, irc: IrcConnection, data: Dict):
         date_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
+
         message = f"Test message from {APP_NAME} posted at {date_now}"
         self.send_message_to_event_handler("test", irc, message)
 
